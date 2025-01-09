@@ -22,15 +22,20 @@ class AddTaskViewController: UIViewController {
     
     private var selectedDate: Date?
     private var selectedTime: Date?
+    private var isDescriptionError: Bool = false
     
     private var combinedDateTime: Date? {
-        guard let date = selectedDate, let time = selectedTime else {
+        guard let date = selectedDate else {
             return nil
         }
         
         let calendar = Calendar.current
+        let now = Date()
+        
+        let timeToUse = selectedTime ?? now
+        
         let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
-        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: timeToUse)
         
         var combinedComponents = DateComponents()
         combinedComponents.year = dateComponents.year
@@ -60,6 +65,8 @@ class AddTaskViewController: UIViewController {
     }
     
     private func setupEvents() {
+        let saveButton = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(didTapSaveButton))
+        navigationItem.rightBarButtonItem = saveButton
         configurePickers()
         observeTitleTextFieldChanges()
     }
@@ -67,8 +74,6 @@ class AddTaskViewController: UIViewController {
     private func setupNavigation() {
         view.backgroundColor = .white
         navigationItem.title = "Add Task"
-        let saveButton = UIBarButtonItem(title: "Save", style: .done, target: self, action: #selector(didTapSaveButton))
-        navigationItem.rightBarButtonItem = saveButton
     }
     
     private func updateTitleTextFieldForToday() {
@@ -92,10 +97,10 @@ class AddTaskViewController: UIViewController {
     }
     
     
-    func showError(message: String, forField field: UITextField?, tag: Int) {
+    func showError(message: String, forField field: UIView?, tag: Int) {
         guard let field = field else { return }
         
-        if field.viewWithTag(tag) == nil {
+        if self.view.viewWithTag(tag) == nil {
             let errorLabel = UILabel()
             errorLabel.text = message
             errorLabel.textColor = .red
@@ -164,17 +169,18 @@ class AddTaskViewController: UIViewController {
             hideError(tag: 1002)
         }
         
-        if selectedTime == nil {
-            timeTextField?.layer.borderColor = UIColor.red.cgColor
-            showError(message: "Time is required.", forField: timeTextField, tag: 1003)
+        if descriptionTextField?.textColor == .lightGray {
+            isDescriptionError = true
+            descriptionTextField?.layer.borderColor = UIColor.red.cgColor
+            showError(message: "Description is required.", forField: descriptionTextField, tag: 1003)
             isValid = false
         } else {
-            timeTextField?.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
+            isDescriptionError = false
+            descriptionTextField?.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
             hideError(tag: 1003)
         }
         
         if !isValid {
-            print("All fields must be filled.")
             return
         }
         
@@ -185,8 +191,26 @@ class AddTaskViewController: UIViewController {
                 date: combinedDateTime!,
                 isComplete: false
             )
-            viewModel.addTask(task)
-            print("Task added successfully!")
+            viewModel.addTask(task) {[self] result in
+                switch result {
+                case .success:
+                    self.navigationController?.popViewController(animated: true)
+                case .failure(let error):
+                    print("Failed to add task: \(error.localizedDescription)")
+                    let alertController = UIAlertController(
+                        title: "Error",
+                        message: "Failed to add task: \(error.localizedDescription)",
+                        preferredStyle: .alert
+                    )
+                    
+                    // Add an OK action to dismiss the alert
+                    let okAction = UIAlertAction(title: "OK", style: .default)
+                    alertController.addAction(okAction)
+                    
+                    // Present the alert
+                    self.present(alertController, animated: true, completion: nil)
+                }
+            }
         }
     }
 }
@@ -373,6 +397,10 @@ extension AddTaskViewController: UITextViewDelegate {
             textView.text = ""
             textView.textColor = .black
         }
+        
+        if isDescriptionError {
+            applyErrorStyle(to: textView)
+        }
     }
     
     func textViewDidEndEditing(_ textView: UITextView) {
@@ -381,5 +409,15 @@ extension AddTaskViewController: UITextViewDelegate {
             textView.text = "Enter task description"
             textView.textColor = .lightGray
         }
+        
+        if isDescriptionError {
+            applyErrorStyle(to: textView)
+        }
+    }
+    
+    private func applyErrorStyle(to textView: UITextView) {
+        textView.layer.borderColor = UIColor.red.cgColor
+        textView.layer.borderWidth = 1
+        textView.layer.cornerRadius = 5
     }
 }

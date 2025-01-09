@@ -10,9 +10,9 @@ import UIKit
 import SnapKit
 
 protocol TaskCellDelegate: AnyObject {
-    func onDelete(for task: Task)
-    func setReminder(for task: Task)
-    func onCompleteUpdated(for task: Task)
+    func onDelete(for task: TaskDataModel)
+    func setReminder(for task: TaskDataModel)
+    func onCompleteUpdated(for task: TaskDataModel)
 }
 
 class TaskCell: UITableViewCell {
@@ -20,7 +20,7 @@ class TaskCell: UITableViewCell {
     private var titleLabel: UILabel?
     private var timeLabel: UILabel?
     private var checkBox: UIButton?
-    private var task: Task?
+    private var task: TaskDataModel?
     
     weak var delegate: TaskCellDelegate?
     
@@ -34,7 +34,7 @@ class TaskCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func configure(with task: Task) {
+    func configure(with task: TaskDataModel) {
         self.task = task
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm" 
@@ -52,7 +52,7 @@ class TaskCell: UITableViewCell {
     }
     
     @objc private func didTapCheckBox() {
-        guard var task = task else { return }
+        guard let task = task else { return }
         delegate?.onCompleteUpdated(for: task)
         checkBox?.isSelected = task.isComplete
         animateTaskCompletion()
@@ -88,12 +88,10 @@ extension TaskCell: UIContextMenuInteractionDelegate {
         guard let task = task else { return nil }
         
         let reminderAction = UIAction(title: "Set Reminder", image: UIImage(systemName: "bell")) { action in
-            print("Set reminder for task: \(task.title)")
             self.delegate?.setReminder(for: task)
         }
         
         let deleteAction = UIAction(title: "Delete Task", image: UIImage(systemName: "trash"), attributes: .destructive) { action in
-            print("Delete task: \(task.title)")
             self.delegate?.onDelete(for: task)
         }
         
@@ -122,7 +120,7 @@ private extension TaskCell {
         timeLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(5)
             make.left.equalTo(contentView).offset(15)
-            make.bottom.equalTo(contentView)
+            make.bottom.equalTo(contentView).offset(-10)
         }
         
         checkBox.snp.makeConstraints { make in

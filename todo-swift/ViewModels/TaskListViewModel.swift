@@ -11,7 +11,7 @@ import RxSwift
 import RxCocoa
 
 class TaskListViewModel {
-    var tasks: BehaviorRelay<[(date: Date, tasks: [Task])]>
+    var tasks: BehaviorRelay<[(date: Date, tasks: [TaskDataModel])]>
     
     private var realm: Realm
     
@@ -30,8 +30,6 @@ class TaskListViewModel {
             .filter("date >= %@", startOfToday) // Filter tasks for today and beyond
             .sorted(byKeyPath: "date", ascending: true)
         
-        print("Fetched all tasks (sorted by full date): \(allTasks.map { $0.date })")
-        
         var utcCalendar = Calendar(identifier: .gregorian)
         utcCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
         
@@ -44,16 +42,31 @@ class TaskListViewModel {
         
         // Sort the grouped tasks by date (ignoring time)
         let sortedGroupedTasks = groupedTasks.sorted { $0.key < $1.key }
-        var sortedTasksArray: [(date: Date, tasks: [Task])] = []
+        var sortedTasksArray: [(date: Date, tasks: [TaskDataModel])] = []
         
         // Sort tasks within each group by the full date (keeping time info intact for the tasks)
         for (date, tasksForDate) in sortedGroupedTasks {
-            let sortedTasksForDate = tasksForDate.sorted { $0.date < $1.date }
-            sortedTasksArray.append((date: date, tasks: sortedTasksForDate))
+            // Convert each task to TaskDataModel
+            let convertedTasksForDate = tasksForDate.map { convertTaskModel(data: $0) }
+            
+            // Sort converted tasks by the date (keeping time intact)
+            let sortedConvertedTasksForDate = convertedTasksForDate.sorted { $0.date < $1.date }
+            
+            // Append the sorted and converted tasks
+            sortedTasksArray.append((date: date, tasks: sortedConvertedTasksForDate))
         }
         
-        // Update tasks with the sorted and grouped data
         tasks.accept(sortedTasksArray)
+    }
+    
+    func convertTaskModel(data: Task) -> TaskDataModel {
+        return TaskDataModel(
+            id: data.id,
+            title: data.title,
+            descriptionText: data.descriptionText,
+            date: data.date,
+            isComplete: data.isComplete
+        )
     }
 
 
@@ -73,43 +86,45 @@ class TaskListViewModel {
 
     
     // Toggle task completion
-    func toggleTaskCompletion(for task: Task) {
+    func toggleTaskCompletion(for task: TaskDataModel, completion: @escaping (Result<Void, Error>) -> Void) {
         do {
-            try realm.write {
-                task.isComplete.toggle()
+            if let taskToToggle = realm.objects(Task.self).filter("id == %@", task.id).first {
+                try realm.write {
+                    taskToToggle.isComplete.toggle()
+                }
+                loadTasks()
+                completion(.success(()))
+            } else {
+                print("Error: Task with the given ID not found.")
+                completion(.failure(NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "Task not found."])))
             }
-            loadTasks() // Reload tasks after the update
         } catch {
             print("Error toggling task completion: \(error)")
+            completion(.failure(error))
         }
     }
+
     
     // Delete a task
-    func deleteTask(task: Task) {
+    func deleteTask(task: TaskDataModel, completion: @escaping (Result<Void, Error>) -> Void) {
         do {
-            try realm.write {
-                realm.delete(task)
+            if let taskToDelete = realm.objects(Task.self).filter("id == %@", task.id).first {
+                try realm.write {
+                    realm.delete(taskToDelete)
+                }
+                loadTasks()
+                completion(.success(()))
+            } else {
+                let error = NSError(domain: "TaskNotFound", code: 404, userInfo: [NSLocalizedDescriptionKey: "Task with the given ID was not found."])
+                completion(.failure(error))
             }
-            loadTasks() // Reload tasks after the deletion
         } catch {
             print("Error deleting task: \(error)")
+            completion(.failure(error))
         }
     }
     
-    // Update an existing task
-    func updateTask(_ task: Task) {
-        do {
-            try realm.write {
-                realm.add(task, update: .modified) // Use update mode to modify existing tasks
-            }
-            loadTasks() // Reload tasks after the update
-        } catch {
-            print("Error updating task: \(error)")
-        }
-    }
-    
-    // Add a new task
-    func addTask(_ taskDataModel: TaskDataModel) {
+    func addTask(_ taskDataModel: TaskDataModel, completion: @escaping (Result<Void, Error>) -> Void) {
         let task = Task()
         task.title = taskDataModel.title
         task.descriptionText = taskDataModel.descriptionText
@@ -120,19 +135,49 @@ class TaskListViewModel {
             try realm.write {
                 realm.add(task)
             }
-            loadTasks() // Reload tasks after the addition
+            loadTasks()
+            
+            completion(.success(()))
         } catch {
             print("Error adding task: \(error)")
+            
+            completion(.failure(error))
+        }
+    }
+    
+    func addTasks(_ taskDataModels: [TaskDataModel], completion: @escaping (Result<Void, Error>) -> Void) {
+        do {
+            try realm.write {
+                for taskDataModel in taskDataModels {
+                    let task = Task()
+                    task.title = taskDataModel.title
+                    task.descriptionText = taskDataModel.descriptionText
+                    task.date = taskDataModel.date
+                    task.isComplete = taskDataModel.isComplete
+                    
+                    realm.add(task)
+                }
+                
+                loadTasks()
+                completion(.success(()))
+            }
+        } catch {
+            print("Error adding tasks: \(error)")
+            completion(.failure(error))
         }
     }
     
     // Move task to a new date (section)
-    func moveTask(task: Task, to newDate: Date) {
+    func moveTask(task: TaskDataModel, to newDate: Date) {
         do {
-            try realm.write {
-                task.date = newDate // Update the task's date
+            if let taskToMove = realm.objects(Task.self).filter("id == %@", task.id).first {
+                try realm.write {
+                    taskToMove.date = newDate
+                }
+                loadTasks()
+            } else {
+                print("Error: Task with the given ID not found.")
             }
-            loadTasks() 
         } catch {
             print("Error moving task: \(error)")
         }
