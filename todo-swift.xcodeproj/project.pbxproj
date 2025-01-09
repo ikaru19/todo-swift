@@ -24,6 +24,7 @@
 		84E82D632D2FBF8D00801E44 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E82D622D2FBF8D00801E44 /* Task.swift */; };
 		84E82D662D2FC06800801E44 /* TaskListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E82D652D2FC06800801E44 /* TaskListViewModel.swift */; };
 		84E82D692D2FCBE000801E44 /* TaskDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84E82D682D2FCBE000801E44 /* TaskDataModel.swift */; };
+		84E82D6B2D30203600801E44 /* success.json in Resources */ = {isa = PBXBuildFile; fileRef = 84E82D6A2D30203600801E44 /* success.json */; };
 		937FAF4B146C44196A72FFCB /* Pods_todo_swiftTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0ED79EFD4F3F6C7C0AE62686 /* Pods_todo_swiftTests.framework */; };
 		D89E067373B90FCCCEEE3C09 /* Pods_todo_swift_todo_swiftUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD37004FE2A6395866FEC80A /* Pods_todo_swift_todo_swiftUITests.framework */; };
 /* End PBXBuildFile section */
@@ -73,6 +74,7 @@
 		84E82D622D2FBF8D00801E44 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
 		84E82D652D2FC06800801E44 /* TaskListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListViewModel.swift; sourceTree = "<group>"; };
 		84E82D682D2FCBE000801E44 /* TaskDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDataModel.swift; sourceTree = "<group>"; };
+		84E82D6A2D30203600801E44 /* success.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = success.json; sourceTree = "<group>"; };
 		909BD033A788A7496B54394E /* Pods_todo_swift.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_todo_swift.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FD37004FE2A6395866FEC80A /* Pods_todo_swift_todo_swiftUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_todo_swift_todo_swiftUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -154,6 +156,7 @@
 				8467B22C2D2F84600079BCEE /* Main.storyboard */,
 				8467B22D2D2F84600079BCEE /* SceneDelegate.swift */,
 				8467B22E2D2F84600079BCEE /* ViewController.swift */,
+				84E82D6A2D30203600801E44 /* success.json */,
 			);
 			path = "todo-swift";
 			sourceTree = "<group>";
@@ -330,6 +333,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8467B2332D2F84600079BCEE /* Assets.xcassets in Resources */,
+				84E82D6B2D30203600801E44 /* success.json in Resources */,
 				8467B2352D2F84600079BCEE /* LaunchScreen.storyboard in Resources */,
 				8467B2362D2F84600079BCEE /* Main.storyboard in Resources */,
 			);

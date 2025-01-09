@@ -8,6 +8,7 @@
 import Foundation
 import UIKit
 import SnapKit
+import Lottie
 
 class AddTaskViewController: UIViewController {
     private let viewModel: TaskListViewModel
@@ -16,6 +17,7 @@ class AddTaskViewController: UIViewController {
     private var descriptionTextField: UITextView?
     private var dateTextField: UITextField?
     private var timeTextField: UITextField?
+    var animationView: LottieAnimationView?
     
     private let datePicker = UIDatePicker()
     private let timePicker = UIDatePicker()
@@ -143,6 +145,17 @@ class AddTaskViewController: UIViewController {
         titleTextField?.attributedText = attributedText
     }
     
+    func showSuccessAnimation(completion: @escaping () -> Void) {
+        animationView?.isHidden = false
+        animationView?.play { (finished) in
+            if finished {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    self.animationView?.isHidden = true
+                    completion()
+                }
+            }
+        }
+    }
     
     private func observeTitleTextFieldChanges() {
         titleTextField?.addTarget(self, action: #selector(titleTextFieldDidChange), for: .editingChanged)
@@ -195,7 +208,10 @@ class AddTaskViewController: UIViewController {
             viewModel.addTask(task) {[self] result in
                 switch result {
                 case .success:
-                    self.navigationController?.popViewController(animated: true)
+                    self.showSuccessAnimation {
+                        // Navigate back after animation finishes
+                        self.navigationController?.popViewController(animated: true)
+                    }
                 case .failure(let error):
                     print("Failed to add task: \(error.localizedDescription)")
                     let alertController = UIAlertController(
@@ -289,6 +305,7 @@ private extension AddTaskViewController {
         self.descriptionTextField = descriptionTextField
         self.dateTextField = dateTextField
         self.timeTextField = timeTextField
+        setupAnimation()
     }
     
     private func initLabel(text: String) -> UILabel {
@@ -320,6 +337,17 @@ private extension AddTaskViewController {
         textField.layer.borderWidth = 1
         textField.layer.cornerRadius = 5
         return textField
+    }
+    
+    private func setupAnimation() {
+        let animationView = LottieAnimationView(name: "success")
+        animationView.contentMode = .scaleAspectFit
+        animationView.isHidden = true // Initially hidden
+        view.addSubview(animationView)
+        animationView.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
+        self.animationView = animationView
     }
 }
 
