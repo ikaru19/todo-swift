@@ -1,0 +1,39 @@
+# Xcode
+#
+# User-specific files
+*.xcuserstate
+*.xcworkspace
+xcuserdata/
+
+# Build generated
+build/
+DerivedData/
+
+# Swift Package Manager
+#
+# Dependencies and build artifacts
+.swiftpm/
+Packages/
+.xcconfig
+
+# CocoaPods
+#
+# CocoaPods generated files
+Pods/
+podfile.lock
+
+# Carthage
+#
+# Carthage dependencies
+Carthage/
+
+# Other files
+#
+# User-specific files
+*.swp
+*.swo
+
+# macOS
+#
+# System files
+.DS_Store
