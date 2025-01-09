@@ -10,6 +10,8 @@ import UIKit
 import SnapKit
 
 class AddTaskViewController: UIViewController {
+    private let viewModel: TaskListViewModel
+    
     private var titleTextField: UITextField?
     private var descriptionTextField: UITextView?
     private var dateTextField: UITextField?
@@ -21,11 +23,25 @@ class AddTaskViewController: UIViewController {
     private var selectedDate: Date?
     private var selectedTime: Date?
     
+    init(viewModel: TaskListViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigation()
         setupUI()
+        setupEvents()
+    }
+    
+    private func setupEvents() {
         configurePickers()
+        observeTitleTextFieldChanges()
     }
     
     private func setupNavigation() {
@@ -35,23 +51,125 @@ class AddTaskViewController: UIViewController {
         navigationItem.rightBarButtonItem = saveButton
     }
     
+    private func updateTitleTextFieldForToday() {
+        guard let titleText = titleTextField?.text else { return }
+        
+        let range = (titleText as NSString).range(of: "today", options: .caseInsensitive)
+        
+        let defaultAttribute: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.black
+        ]
+        
+        let attributedText = NSMutableAttributedString(string: titleText, attributes: defaultAttribute)
+        
+        if range.location != NSNotFound {
+            if selectedDate == nil || Calendar.current.isDateInToday(selectedDate!) {
+                attributedText.addAttribute(.foregroundColor, value: UIColor.purple, range: range)
+            }
+        }
+        
+        titleTextField?.attributedText = attributedText
+    }
+    
+    
+    func showError(message: String, forField field: UITextField?, tag: Int) {
+        guard let field = field else { return }
+        
+        if field.viewWithTag(tag) == nil {
+            let errorLabel = UILabel()
+            errorLabel.text = message
+            errorLabel.textColor = .red
+            errorLabel.font = UIFont.systemFont(ofSize: 12)
+            errorLabel.tag = tag
+            errorLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            field.superview?.addSubview(errorLabel)
+            
+            errorLabel.snp.makeConstraints { make in
+                make.top.equalTo(field.snp.bottom).offset(4)
+                make.leading.equalTo(field.snp.leading)
+            }
+        }
+    }
+    
+    func hideError(tag: Int) {
+        if let errorLabel = view.viewWithTag(tag) {
+            errorLabel.removeFromSuperview()
+        }
+    }
+    
+    @objc private func titleTextFieldDidChange() {
+        guard let titleText = titleTextField?.text else { return }
+        
+        let range = (titleText as NSString).range(of: "today", options: .caseInsensitive)
+        
+        let defaultAttribute: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.black
+        ]
+        let attributedText = NSMutableAttributedString(string: titleText, attributes: defaultAttribute)
+        
+        if range.location != NSNotFound {
+            attributedText.addAttribute(.foregroundColor, value: UIColor.purple, range: range)
+            
+            selectedDate = Date()
+            dateTextField?.text = formattedDateDescription(for: selectedDate ?? Date())
+        }
+        
+        titleTextField?.attributedText = attributedText
+    }
+    
+    
+    private func observeTitleTextFieldChanges() {
+        titleTextField?.addTarget(self, action: #selector(titleTextFieldDidChange), for: .editingChanged)
+    }
+    
     @objc private func didTapSaveButton() {
-        guard let title = titleTextField?.text, !title.isEmpty,
-              let date = selectedDate,
-              let time = selectedTime else {
+        var isValid = true
+        
+        if let title = titleTextField?.text, title.isEmpty {
+            titleTextField?.layer.borderColor = UIColor.red.cgColor
+            showError(message: "Title is required.", forField: titleTextField, tag: 1001)
+            isValid = false
+        } else {
+            titleTextField?.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
+            hideError(tag: 1001)
+        }
+        
+        if selectedDate == nil {
+            dateTextField?.layer.borderColor = UIColor.red.cgColor
+            showError(message: "Date is required.", forField: dateTextField, tag: 1002)
+            isValid = false
+        } else {
+            dateTextField?.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
+            hideError(tag: 1002)
+        }
+        
+        if selectedTime == nil {
+            timeTextField?.layer.borderColor = UIColor.red.cgColor
+            showError(message: "Time is required.", forField: timeTextField, tag: 1003)
+            isValid = false
+        } else {
+            timeTextField?.layer.borderColor = UIColor.lightGray.withAlphaComponent(0.3).cgColor
+            hideError(tag: 1003)
+        }
+        
+        if !isValid {
             print("All fields must be filled.")
             return
         }
         
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        let combinedDateTime = Calendar.current.date(bySettingHour: Calendar.current.component(.hour, from: time),
-                                                     minute: Calendar.current.component(.minute, from: time),
+        let combinedDateTime = Calendar.current.date(bySettingHour: Calendar.current.component(.hour, from: selectedTime!),
+                                                     minute: Calendar.current.component(.minute, from: selectedTime!),
                                                      second: 0,
-                                                     of: date)
+                                                     of: selectedDate!)
         
-        let finalDateString = formatter.string(from: combinedDateTime ?? date)
-        print("Title: \(title), Date-Time: \(finalDateString)")
+        let finalDateString = formatter.string(from: combinedDateTime ?? selectedDate!)
+        if let title = titleTextField?.text, let description = descriptionTextField?.text {
+            viewModel.addTask(title: title, description: description, date: selectedDate!, time: combinedDateTime ?? selectedDate!)
+            print("Task added successfully!")
+        }
     }
 }
 
@@ -162,32 +280,13 @@ private extension AddTaskViewController {
     }
 }
 
-extension AddTaskViewController: UITextViewDelegate {
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        if textView.textColor == .lightGray {
-            textView.text = ""
-            textView.textColor = .black
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        if textView.text.isEmpty {
-            textView.text = "Enter task description"
-            textView.textColor = .lightGray
-        }
-    }
-}
-
-
 // MARK: - Configure Pickers
 private extension AddTaskViewController {
     private func configurePickers() {
-        // Configure Date Picker
         datePicker.datePickerMode = .date
         datePicker.preferredDatePickerStyle = .wheels
         configurePicker(datePicker, for: dateTextField)
         
-        // Configure Time Picker
         timePicker.datePickerMode = .time
         timePicker.preferredDatePickerStyle = .wheels
         configurePicker(timePicker, for: timeTextField)
@@ -197,16 +296,9 @@ private extension AddTaskViewController {
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
         
-        // Cancel Button
         let cancelButton = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(didPickerTapCancelButton))
-        
-        // Flexible Space
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        
-        // Done Button
         let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(didTapDoneButton))
-        
-        // Add buttons to the toolbar
         toolbar.setItems([cancelButton, flexibleSpace, doneButton], animated: true)
         
         textField?.inputView = picker
@@ -214,16 +306,24 @@ private extension AddTaskViewController {
     }
     
     @objc private func didPickerTapCancelButton() {
-        // Dismiss the picker without saving changes
         view.endEditing(true)
     }
     
     @objc private func didTapDoneButton() {
         if dateTextField?.isFirstResponder == true {
+            // Update the selected date
             selectedDate = datePicker.date
+            
+            // Update the dateTextField with the formatted date description
             dateTextField?.text = formattedDateDescription(for: datePicker.date)
+            
+            // Update the titleTextField's attributed text
+            updateTitleTextFieldForToday()
         } else if timeTextField?.isFirstResponder == true {
+            // Update the selected time
             selectedTime = timePicker.date
+            
+            // Format and update the timeTextField with the selected time
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm"
             timeTextField?.text = formatter.string(from: timePicker.date)
@@ -248,3 +348,20 @@ private extension AddTaskViewController {
     }
 }
 
+extension AddTaskViewController: UITextViewDelegate {
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        // Only apply this to the descriptionTextField (UITextView)
+        if textView == descriptionTextField && textView.textColor == .lightGray {
+            textView.text = ""
+            textView.textColor = .black
+        }
+    }
+    
+    func textViewDidEndEditing(_ textView: UITextView) {
+        // Only apply this to the descriptionTextField (UITextView)
+        if textView == descriptionTextField && textView.text.isEmpty {
+            textView.text = "Enter task description"
+            textView.textColor = .lightGray
+        }
+    }
+}

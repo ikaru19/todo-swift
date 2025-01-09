@@ -8,6 +8,7 @@ target 'todo-swift' do
   # Pods for todo-swift
 
   pod 'RxSwift'
+  pod 'RxCocoa'
   pod 'RealmSwift', '~> 20.0.1'
   pod 'SnapKit'
   pod 'lottie-ios'

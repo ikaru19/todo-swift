@@ -12,6 +12,7 @@ import SnapKit
 protocol TaskCellDelegate: AnyObject {
     func onDelete(for task: Task)
     func setReminder(for task: Task)
+    func onCompleteUpdated(for task: Task)
 }
 
 class TaskCell: UITableViewCell {
@@ -36,14 +37,17 @@ class TaskCell: UITableViewCell {
     func configure(with task: Task) {
         self.task = task
         titleLabel?.text = task.title
-        timeLabel?.text = task.time
-        checkBox?.isSelected = task.isCompleted
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm" 
+        let formattedTime = formatter.string(from: task.time)
+        timeLabel?.text = formattedTime
+        checkBox?.isSelected = task.isComplete
     }
     
     @objc private func didTapCheckBox() {
         guard var task = task else { return }
-        task.isCompleted.toggle()
-        checkBox?.isSelected = task.isCompleted
+        delegate?.onCompleteUpdated(for: task)
+        checkBox?.isSelected = task.isComplete
         animateTaskCompletion()
     }
     
