@@ -169,7 +169,8 @@ class AddTaskViewController: UIViewController {
             hideError(tag: 1002)
         }
         
-        if descriptionTextField?.textColor == .lightGray {
+        if let desc = descriptionTextField?.text,
+           descriptionTextField?.textColor == .lightGray || desc.isEmpty {
             isDescriptionError = true
             descriptionTextField?.layer.borderColor = UIColor.red.cgColor
             showError(message: "Description is required.", forField: descriptionTextField, tag: 1003)

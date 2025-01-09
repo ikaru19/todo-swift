@@ -219,7 +219,7 @@ extension TaskListViewController: TaskCellDelegate {
                         if let error = error {
                             print("Error scheduling notification: \(error.localizedDescription)")
                         } else {
-                            print("Reminder set successfully for task: \(task.title) at \(task.date)")
+                            print("Reminder set successfully for task: \(task.title)")
                         }
                     }
                 } else {
@@ -320,6 +320,8 @@ private extension TaskListViewController {
     func insertMockData() {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+        let twoDay = calendar.date(byAdding: .day, value: 2, to: today)!
         
         let tasksToAdd: [TaskDataModel] = [
             TaskDataModel(
@@ -329,7 +331,7 @@ private extension TaskListViewController {
                 isComplete: true
             ),
             TaskDataModel(
-                title: "Register UII",
+                title: "Register UI",
                 descriptionText: "Register the UI interface for the project",
                 date: calendar.date(bySettingHour: 9, minute: 0, second: 0, of: today) ?? Date(),
                 isComplete: true
@@ -350,6 +352,84 @@ private extension TaskListViewController {
                 title: "Delete Mock up",
                 descriptionText: "Delete",
                 date: calendar.date(bySettingHour: 14, minute: 30, second: 0, of: today) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Slice Screen",
+                descriptionText: "Delete",
+                date: calendar.date(bySettingHour: 15, minute: 30, second: 0, of: today) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Stand up meeting",
+                descriptionText: "Daily stand up meeting",
+                date: calendar.date(bySettingHour: 8, minute: 30, second: 0, of: tomorrow) ?? Date(),
+                isComplete: true
+            ),
+            TaskDataModel(
+                title: "Register UI",
+                descriptionText: "Register the UI interface for the project",
+                date: calendar.date(bySettingHour: 9, minute: 0, second: 0, of: tomorrow) ?? Date(),
+                isComplete: true
+            ),
+            TaskDataModel(
+                title: "To Do List Mock up",
+                descriptionText: "Mock up the to-do list UI",
+                date: calendar.date(bySettingHour: 10, minute: 0, second: 0, of: tomorrow) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Checkout Mock up",
+                descriptionText: "Checkout",
+                date: calendar.date(bySettingHour: 13, minute: 30, second: 0, of: tomorrow) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Delete Mock up",
+                descriptionText: "Delete",
+                date: calendar.date(bySettingHour: 14, minute: 30, second: 0, of: tomorrow) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Slice Screen",
+                descriptionText: "Delete",
+                date: calendar.date(bySettingHour: 15, minute: 30, second: 0, of: tomorrow) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Stand up meeting",
+                descriptionText: "Daily stand up meeting",
+                date: calendar.date(bySettingHour: 8, minute: 30, second: 0, of: twoDay) ?? Date(),
+                isComplete: true
+            ),
+            TaskDataModel(
+                title: "Register UI",
+                descriptionText: "Register the UI interface for the project",
+                date: calendar.date(bySettingHour: 9, minute: 0, second: 0, of: twoDay) ?? Date(),
+                isComplete: true
+            ),
+            TaskDataModel(
+                title: "To Do List Mock up",
+                descriptionText: "Mock up the to-do list UI",
+                date: calendar.date(bySettingHour: 10, minute: 0, second: 0, of: twoDay) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Checkout Mock up",
+                descriptionText: "Checkout",
+                date: calendar.date(bySettingHour: 13, minute: 30, second: 0, of: twoDay) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Delete Mock up",
+                descriptionText: "Delete",
+                date: calendar.date(bySettingHour: 14, minute: 30, second: 0, of: twoDay) ?? Date(),
+                isComplete: false
+            ),
+            TaskDataModel(
+                title: "Slice Screen",
+                descriptionText: "Delete",
+                date: calendar.date(bySettingHour: 15, minute: 30, second: 0, of: twoDay) ?? Date(),
                 isComplete: false
             )
         ]
