@@ -36,12 +36,19 @@ class TaskCell: UITableViewCell {
     
     func configure(with task: Task) {
         self.task = task
-        titleLabel?.text = task.title
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm" 
-        let formattedTime = formatter.string(from: task.time)
+        let formattedTime = formatter.string(from: task.date)
         timeLabel?.text = formattedTime
         checkBox?.isSelected = task.isComplete
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .strikethroughStyle: task.isComplete ? NSUnderlineStyle.single.rawValue : 0,
+            .strikethroughColor: UIColor.red
+        ]
+        let titleText = task.title
+        self.titleLabel?.attributedText = NSAttributedString(string: titleText, attributes: attributes)
+
     }
     
     @objc private func didTapCheckBox() {
@@ -58,10 +65,9 @@ class TaskCell: UITableViewCell {
             self.titleLabel?.alpha = isChecked ? 0.5 : 1
             self.timeLabel?.alpha = isChecked ? 0.5 : 1
             
-            // Applying strikethrough when the task is marked as completed
             let attributes: [NSAttributedString.Key: Any] = [
                 .strikethroughStyle: isChecked ? NSUnderlineStyle.single.rawValue : 0,
-                .strikethroughColor: UIColor.red // Optional: you can change the color of the strikethrough
+                .strikethroughColor: UIColor.red
             ]
             let titleText = self.titleLabel?.text ?? ""
             self.titleLabel?.attributedText = NSAttributedString(string: titleText, attributes: attributes)

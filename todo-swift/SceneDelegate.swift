@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RealmSwift
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
@@ -16,7 +17,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         // Buat window dan atur rootViewController
         let window = UIWindow(windowScene: windowScene)
-        let viewModel = TaskListViewModel()
+        let realm = try! Realm()
+        let viewModel = TaskListViewModel(realm: realm)
         window.rootViewController = UINavigationController(rootViewController: TaskListViewController(viewModel: viewModel))
         self.window = window
         window.makeKeyAndVisible()

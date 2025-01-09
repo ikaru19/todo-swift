@@ -23,6 +23,26 @@ class AddTaskViewController: UIViewController {
     private var selectedDate: Date?
     private var selectedTime: Date?
     
+    private var combinedDateTime: Date? {
+        guard let date = selectedDate, let time = selectedTime else {
+            return nil
+        }
+        
+        let calendar = Calendar.current
+        let dateComponents = calendar.dateComponents([.year, .month, .day], from: date)
+        let timeComponents = calendar.dateComponents([.hour, .minute, .second], from: time)
+        
+        var combinedComponents = DateComponents()
+        combinedComponents.year = dateComponents.year
+        combinedComponents.month = dateComponents.month
+        combinedComponents.day = dateComponents.day
+        combinedComponents.hour = timeComponents.hour
+        combinedComponents.minute = timeComponents.minute
+        combinedComponents.second = timeComponents.second
+        
+        return calendar.date(from: combinedComponents)
+    }
+    
     init(viewModel: TaskListViewModel) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
@@ -158,16 +178,14 @@ class AddTaskViewController: UIViewController {
             return
         }
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        let combinedDateTime = Calendar.current.date(bySettingHour: Calendar.current.component(.hour, from: selectedTime!),
-                                                     minute: Calendar.current.component(.minute, from: selectedTime!),
-                                                     second: 0,
-                                                     of: selectedDate!)
-        
-        let finalDateString = formatter.string(from: combinedDateTime ?? selectedDate!)
         if let title = titleTextField?.text, let description = descriptionTextField?.text {
-            viewModel.addTask(title: title, description: description, date: selectedDate!, time: combinedDateTime ?? selectedDate!)
+            let task = TaskDataModel(
+                title: title,
+                descriptionText: description,
+                date: combinedDateTime!,
+                isComplete: false
+            )
+            viewModel.addTask(task)
             print("Task added successfully!")
         }
     }

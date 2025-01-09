@@ -18,7 +18,7 @@ class TaskListViewController: UIViewController {
     private var disposeBag = DisposeBag()
     private var viewModel: TaskListViewModel
     
-    private var tasks: [String: [Task]] = [:]
+    private var tasks: [(date: Date, tasks: [Task])] = []
     
     init(viewModel: TaskListViewModel) {
         self.viewModel = viewModel
@@ -47,9 +47,61 @@ class TaskListViewController: UIViewController {
     private func bindViewModel() {
         viewModel.tasks
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] groupedTasks in
-                self?.tasks = groupedTasks
-                self?.tableView?.reloadData()
+            .subscribe(onNext: { [weak self] newTasks in
+                guard let self = self else { return }
+                
+                // Handle empty task scenario
+                if self.tasks.isEmpty {
+                    self.tasks = newTasks
+                    self.tableView?.reloadData()
+                    return
+                }
+                
+                let oldTasks = self.tasks
+                self.tasks = newTasks
+                
+                var deletedSections: IndexSet = []
+                var insertedSections: IndexSet = []
+                var reloadedSections: IndexSet = []
+                
+                for (index, oldSection) in oldTasks.enumerated() {
+                    if !newTasks.contains(where: { $0.date == oldSection.date }) {
+                        deletedSections.insert(index)
+                    }
+                }
+                
+                for (index, newSection) in newTasks.enumerated() {
+                    if !oldTasks.contains(where: { $0.date == newSection.date }) {
+                        insertedSections.insert(index)
+                    }
+                }
+                
+                for (index, newSection) in newTasks.enumerated() {
+                    if let oldSectionIndex = oldTasks.firstIndex(where: { $0.date == newSection.date }) {
+                        let oldSection = oldTasks[oldSectionIndex]
+                        if oldSection.tasks != newSection.tasks {
+                            if !deletedSections.contains(oldSectionIndex) {
+                                reloadedSections.insert(oldSectionIndex)
+                            }
+                        }
+                    }
+                }
+                
+                self.tableView?.beginUpdates()
+                
+                if !deletedSections.isEmpty {
+                    self.tableView?.deleteSections(deletedSections, with: .automatic)
+                }
+                
+                if !insertedSections.isEmpty {
+                    self.tableView?.insertSections(insertedSections, with: .automatic)
+                }
+                
+                if !reloadedSections.isEmpty {
+                    self.tableView?.reloadSections(reloadedSections, with: .automatic)
+                }
+                
+                self.tableView?.endUpdates()
             })
             .disposed(by: disposeBag)
     }
@@ -59,7 +111,6 @@ class TaskListViewController: UIViewController {
         let vc = AddTaskViewController(viewModel: viewModel)
         self.navigationController?.pushViewController(vc, animated: true)
     }
-    
 }
 
 // MARK: UI SETUP
@@ -105,26 +156,22 @@ extension TaskListViewController: TaskCellDelegate {
     
     func setReminder(for task: Task) {
         print("on set reminder")
+        print("on set reminder \(task.date)")
     }
 }
 
 // MARK: TABLE DELEGATE
 extension TaskListViewController: UITableViewDataSource, UITableViewDelegate {
     func numberOfSections(in tableView: UITableView) -> Int {
-        return tasks.keys.count
+        return tasks.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        let sectionKey = Array(tasks.keys)[section]
-        return tasks[sectionKey]?.count ?? 0
+        return tasks[section].tasks.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let sectionKey = Array(tasks.keys)[indexPath.section]
-        guard let task = tasks[sectionKey]?[indexPath.row] else {
-            return UITableViewCell()
-        }
-        
+        let task = tasks[indexPath.section].tasks[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: TaskCell.identifier, for: indexPath) as! TaskCell
         cell.configure(with: task)
         cell.selectionStyle = .none
@@ -134,47 +181,55 @@ extension TaskListViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let headerView = TaskHeaderView()
-        let sectionKey = Array(tasks.keys)[section]
-        headerView.configure(date: sectionKey)
+        let date = tasks[section].date
+        headerView.configure(date: date)
         return headerView
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 40
     }
+
     
     // MARK: - Drag and Drop
     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
         return true
     }
     
-    func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-        let sectionKeyFrom = Array(tasks.keys)[fromIndexPath.section]
-        let sectionKeyTo = Array(tasks.keys)[to.section]
-        
-        if sectionKeyFrom == sectionKeyTo {
-            var taskArray = tasks[sectionKeyFrom]!
-            let movedTask = taskArray.remove(at: fromIndexPath.row)
-            taskArray.insert(movedTask, at: to.row)
-            tasks[sectionKeyFrom] = taskArray
+    func tableView(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        if sourceIndexPath.section == destinationIndexPath.section {
+            var tasksInSection = tasks[sourceIndexPath.section].tasks
+            let movedTask = tasksInSection.remove(at: sourceIndexPath.row)
+            tasksInSection.insert(movedTask, at: destinationIndexPath.row)
+            tasks[sourceIndexPath.section].tasks = tasksInSection
         } else {
-            var taskArrayFrom = tasks[sectionKeyFrom]!
-            let movedTask = taskArrayFrom.remove(at: fromIndexPath.row)
-            tasks[sectionKeyFrom] = taskArrayFrom
+            var sourceTasks = tasks[sourceIndexPath.section].tasks
+            let movedTask = sourceTasks.remove(at: sourceIndexPath.row)
+            tasks[sourceIndexPath.section].tasks = sourceTasks
             
-            var taskArrayTo = tasks[sectionKeyTo]!
-            taskArrayTo.insert(movedTask, at: to.row)
-            tasks[sectionKeyTo] = taskArrayTo
+            var destinationTasks = tasks[destinationIndexPath.section].tasks
+            destinationTasks.insert(movedTask, at: destinationIndexPath.row)
+            tasks[destinationIndexPath.section].tasks = destinationTasks
+            
+            let calendar = Calendar(identifier: .gregorian)
+            
+            let originalTime = calendar.dateComponents([.hour, .minute, .second], from: movedTask.date)
+            let newDate = tasks[destinationIndexPath.section].date
+            let newDateWithOriginalTime = calendar.date(bySettingHour: originalTime.hour ?? 0,
+                                                        minute: originalTime.minute ?? 0,
+                                                        second: originalTime.second ?? 0,
+                                                        of: newDate)!
+            viewModel.moveTask(task: movedTask, to: newDateWithOriginalTime)
         }
+        
+        tableView.reloadData()
     }
+
 }
 
 extension TaskListViewController: UITableViewDragDelegate {
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        let sectionKey = Array(tasks.keys)[indexPath.section]
-        guard let task = tasks[sectionKey]?[indexPath.row] else {
-            return []
-        }
+        let task = tasks[indexPath.section].tasks[indexPath.row] // Access task directly from the array
         
         let dragItem = UIDragItem(itemProvider: NSItemProvider(object: task.title as NSString))
         dragItem.localObject = task
