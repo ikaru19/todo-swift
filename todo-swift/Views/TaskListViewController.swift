@@ -219,7 +219,7 @@ extension TaskListViewController: TaskCellDelegate {
                         if let error = error {
                             print("Error scheduling notification: \(error.localizedDescription)")
                         } else {
-                            print("Reminder set successfully for task: \(task.title)")
+                            print("Reminder set successfully for task: \(task.title) - \(task.date)")
                         }
                     }
                 } else {
@@ -318,7 +318,8 @@ private extension TaskListViewController {
     }
     
     func insertMockData() {
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(secondsFromGMT: 7 * 60 * 60)!
         let today = calendar.startOfDay(for: Date())
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
         let twoDay = calendar.date(byAdding: .day, value: 2, to: today)!

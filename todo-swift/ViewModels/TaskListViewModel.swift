@@ -23,7 +23,8 @@ class TaskListViewModel {
     
     private func loadTasks() {
         // Fetch all tasks from Realm and sort by full date (including time)
-        let calendar = Calendar.current
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone(secondsFromGMT: 7 * 60 * 60)!
         let startOfToday = calendar.startOfDay(for: Date())
         
         let allTasks = realm.objects(Task.self)
@@ -31,7 +32,7 @@ class TaskListViewModel {
             .sorted(byKeyPath: "date", ascending: true)
         
         var utcCalendar = Calendar(identifier: .gregorian)
-        utcCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        utcCalendar.timeZone = TimeZone(secondsFromGMT: 7 * 60 * 60)!
         
         // Group tasks by the date only (ignoring time)
         let groupedTasks = Dictionary(grouping: allTasks) { (task: Task) -> Date in
@@ -128,7 +129,18 @@ class TaskListViewModel {
         let task = Task()
         task.title = taskDataModel.title
         task.descriptionText = taskDataModel.descriptionText
-        task.date = taskDataModel.date
+        let date = taskDataModel.date
+        
+        let timezone = TimeZone(secondsFromGMT: 7 * 60 * 60)!
+        var calendar = Calendar.current
+        calendar.timeZone = timezone
+        
+        let adjustedDate = calendar.date(bySettingHour: calendar.component(.hour, from: date),
+                                         minute: calendar.component(.minute, from: date),
+                                         second: calendar.component(.second, from: date),
+                                         of: date)!
+        
+        task.date = adjustedDate
         task.isComplete = taskDataModel.isComplete
         
         do {
