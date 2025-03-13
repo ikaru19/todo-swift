@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -76,6 +76,12 @@
 		FD37004FE2A6395866FEC80A /* Pods_todo_swift_todo_swiftUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_todo_swift_todo_swiftUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		DFFB7F722D8331CA0012D750 /* View */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = View; sourceTree = "<group>"; };
+		DFFB7F752D8333310012D750 /* Model */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Model; sourceTree = "<group>"; };
+		DFFB7F782D8334890012D750 /* ViewModel */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ViewModel; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		8467B1D92D2F83DA0079BCEE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -142,6 +148,9 @@
 		8467B22F2D2F84600079BCEE /* todo-swift */ = {
 			isa = PBXGroup;
 			children = (
+				DFFB7F782D8334890012D750 /* ViewModel */,
+				DFFB7F752D8333310012D750 /* Model */,
+				DFFB7F722D8331CA0012D750 /* View */,
 				DFFB7F702D83312E0012D750 /* old */,
 				8467B2272D2F84600079BCEE /* Assets.xcassets */,
 				8467B2282D2F84600079BCEE /* Info.plist */,
@@ -243,6 +252,11 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DFFB7F722D8331CA0012D750 /* View */,
+				DFFB7F752D8333310012D750 /* Model */,
+				DFFB7F782D8334890012D750 /* ViewModel */,
 			);
 			name = "todo-swift";
 			productName = "todo-swift";

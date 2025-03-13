@@ -13,10 +13,7 @@ struct TodoApp: App {
     
     var body: some Scene {
         WindowGroup {
-            // Replace the placeholder VStack with TaskListView
-            VStack {
-                Text("Hello World!")
-            }
+            TaskListView()
         }
     }
 }
